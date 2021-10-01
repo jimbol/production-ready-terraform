@@ -2,7 +2,6 @@ provider "aws" {
   region  = var.aws_region
   profile = "default"
 }
-
 # TEST EC2
 
 # resource "aws_instance" "test_server" {
@@ -26,8 +25,16 @@ terraform {
 }
 
 module "backend" {
-  source =    "../modules/backend_setup"
-  env    =    var.env
+  source      = "../modules/backend_setup"
+  env         = var.env
+}
+
+module "google_cloud" {
+  source        = "../modules/google_project"
+  project_id    = "terraform-class-327014"
+  google_region = "us-east1"
+  network_name  = "terraform-class-network"
+  cidr_block    = "100.0.0.0/24" # 100.0.0.0 - 100.0.255.255
 }
 
 module "vpc" {
@@ -35,4 +42,11 @@ module "vpc" {
   vpc_cidr        = "10.0.0.0/16" # 10.0.0.0 - 10.0.255.255
   private_subnet  = "10.0.1.0/24" # 10.0.1.1 - 10.0.1.254
   public_subnet   = "10.0.2.0/24" # 10.0.2.1 - 10.0.2.254
+}
+
+module "vpn" {
+  source          = "../modules/vpn"
+  aws_route_table_ids = module.vpc.aws_route_table_ids
+  vpc_id = module.vpc.vpc_id
+  google_compute_address = module.google_cloud.google_compute_address
 }

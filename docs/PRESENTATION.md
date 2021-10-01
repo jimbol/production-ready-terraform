@@ -64,3 +64,25 @@
     - The NAT Gateway needs to be in the public subnet so that it can reach the internet
   - Add Route table for Private subnet that points outgoing traffic to the nat gateway
 
+- Site to site VPN
+  - Guide - https://www.silect.is/blog/multi-cloud-vpn-terraform/
+  - What we're going to do
+    - Set up a quick Google Cloud network with an instance of whatever the heck they have, for testing
+    - Set up a aws_vpn_gateway
+    - Creat an aws_customer_gateway for our peer at google
+
+- Client VPN
+  - What we're going to do:
+    - Set up a VPN
+    - Accessed via Mutual authentication (certificate-based)
+      - You can use Active directory or single sign-on instead
+  - Create a CA (certificate authority)
+    - Guides
+      - [docs/create-certificate-authority.md](docs/create-certificate-authority.md)
+      - [AWS Docs](https://docs.aws.amazon.com/vpn/latest/clientvpn-admin/client-authentication.html)
+    - Create a server certificate and key
+    - Create client cert and key
+    - Create a certificate chain
+  - Create Terraform resources
+    - aws_acm_certificate
+    - aws_ec2_client_vpn_endpoint

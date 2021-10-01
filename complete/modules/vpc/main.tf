@@ -6,7 +6,7 @@ resource "aws_vpc" "cloud_network" {
 # Public Subnet
 resource "aws_subnet" "public_subnet" {
   vpc_id =  aws_vpc.cloud_network.id
-  cidr_block = "${var.public_subnet}"
+  cidr_block = var.public_subnet
 }
 
 # Add Internet Gateway for incoming/outgoing internet traffic
@@ -45,7 +45,7 @@ resource "aws_nat_gateway" "nat_gateway" {
 # Private Subnet
 resource "aws_subnet" "private_subnet" {
   vpc_id =  aws_vpc.cloud_network.id
-  cidr_block = "${var.private_subnet}"
+  cidr_block = var.private_subnet
 }
 
 
