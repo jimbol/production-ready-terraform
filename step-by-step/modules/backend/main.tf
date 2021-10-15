@@ -1,12 +1,8 @@
 resource "aws_s3_bucket" "terraform-remote-state-storage" {
-  bucket = "terraform-state-${var.env}-8-30" # has to be a unique name
+  bucket = "terraform-state-${var.env}-10-6"
 
   versioning {
     enabled = true
-  }
-
-  lifecycle {
-    prevent_destroy = false
   }
 
   server_side_encryption_configuration {
@@ -18,16 +14,16 @@ resource "aws_s3_bucket" "terraform-remote-state-storage" {
   }
 
   tags = {
-    name = "Remote Terraform State Store"
+    name = "Remote Terraform state Store"
     proj = "Production Ready Terraform"
-    env  = var.env
+    env = var.env
   }
 }
 
 resource "aws_dynamodb_table" "terraform-state-lock" {
-  name           = "terraform-state-lock-${var.env}"
-  hash_key       = "LockID"
-  read_capacity  = 20
+  name = "terraform-state-lock-${var.env}-10-6"
+  hash_key = "LockID"
+  read_capacity = 20
   write_capacity = 20
 
   attribute {
@@ -37,8 +33,7 @@ resource "aws_dynamodb_table" "terraform-state-lock" {
 
   tags = {
     name = "DynamoDB Terraform State Lock Table"
-    proj = "Production Ready Terraform"
-    env  = var.env
+    proj = "Production ready Terraform"
+    env = var.env
   }
 }
-

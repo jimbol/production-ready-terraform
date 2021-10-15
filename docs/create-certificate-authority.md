@@ -10,6 +10,7 @@ cd easy-rsa/easyrsa3
 ```
 
 ## Create a new Certificate Authority (CA)
+This is what our server can use to validate certificates. Locally we will use it to generate certificates.
 ```
 ./easyrsa build-ca nopass
 ```
@@ -20,14 +21,15 @@ cd easy-rsa/easyrsa3
 ```
 
 ## Generate client config
-"jhall.oreilly.com" doesn't have to be a working domain. Its a name for the client.
-
 When adding a user, generate a separate config for each user. This allows you to revoke access from the user later.
+
 ```
 ./easyrsa build-client-full jhall.oreilly.com nopass
 ```
 
-## If we weren't using terraform, you'd use this
+"jhall.oreilly.com" doesn't have to be a working domain. Its a name for the client.
+
+### If we weren't using terraform, you'd use this to import the certificate
 ```
 aws acm import-certificate --certificate fileb://server.crt --private-key fileb://server.key --certificate-chain fileb://ca.crt
 ```
