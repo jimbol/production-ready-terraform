@@ -1,24 +1,10 @@
-# Next steps
-- Site to site VPN
-
-- Additional services
-  - Kubernetes Cluster
-  - API Gateway and Lambdas
-  - RDS
-- Create presentation
-  - Introduction
-  - Create diagrams
-  - Create tests at each step
-  - Create engagement slides
-
-
 # production-ready-terraform
 Production Ready Terraform
 
 ## Set up
 - Initialize project
 ```
-cd complete/dev
+cd step-by-step/dev
 terraform init
 ```
 
