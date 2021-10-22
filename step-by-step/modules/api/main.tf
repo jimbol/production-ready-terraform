@@ -1,6 +1,7 @@
 # Example from https://github.com/terraform-aws-modules/terraform-aws-apigateway-v2/blob/master/examples/vpc-link-http/main.tf
 
 resource "random_pet" "this" {
+  # Generates a random pet name which can be used to identify resources
   length = 2
 }
 
