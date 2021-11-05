@@ -13,7 +13,3 @@ variable "private_subnet" {
   type = string
 }
 
-variable "aws_vpn_gateway_id" {
-  description = "AWS VPN Gateway ID"
-  type = string
-}

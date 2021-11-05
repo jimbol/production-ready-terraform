@@ -1,8 +1,3 @@
-provider "aws" {
-  region = "us-east-1"
-  profile = "default"
-}
-
 terraform {
   backend "s3" {
     encrypt = true
@@ -12,8 +7,18 @@ terraform {
 
     dynamodb_table = "terraform-state-lock-dev-10-6"
   }
+  required_providers {
+    aws = {
+      source  = "hashicorp/aws"
+      version = "~> 3.0"
+    }
+  }
 }
 
+provider "aws" {
+  region = "us-east-1"
+  profile = "default"
+}
 module "backend" {
   source      = "../modules/backend"
   env         = "dev"
@@ -30,7 +35,6 @@ module "vpc" {
   vpc_cidr = local.vpc_cidr
   private_subnet = local.private_subnet
   public_subnet = local.public_subnet
-  aws_vpn_gateway_id = module.site_to_site_vpn.aws_vpn_gateway_id
 }
 
 module "vpn" {
@@ -75,9 +79,9 @@ resource "aws_security_group" "allow_ssh" {
       to_port          = 0
       ipv6_cidr_blocks = []
       prefix_list_ids  = []
-      protocol         = "-1"
       security_groups  = []
-      self             = false
+      self             = false # should this security group route to itself
+      protocol         = "-1"
     }
   ]
   ingress = [
@@ -86,11 +90,11 @@ resource "aws_security_group" "allow_ssh" {
       description      = ""
       from_port        = 22
       to_port          = 22
+      protocol         = "tcp"
       ipv6_cidr_blocks = []
       prefix_list_ids  = []
-      protocol         = "tcp"
       security_groups  = []
-      self             = false
+      self             = false # should this security group route to itself
     }
   ]
 
@@ -99,6 +103,7 @@ resource "aws_security_group" "allow_ssh" {
   }
 }
 
+# 2 min to create
 # aws_instance - resource type. an ec2 instance
 # test_server - how we refer to the resource within TF
 resource "aws_instance" "test_server" {
@@ -137,7 +142,7 @@ resource "aws_security_group" "allow_ping" {
       prefix_list_ids  = []
       protocol         = "-1"
       security_groups  = []
-      self             = false
+      self             = false # should this security group route to itself
     }
   ]
   ingress = [
@@ -150,7 +155,7 @@ resource "aws_security_group" "allow_ping" {
       prefix_list_ids  = []
       protocol         = "tcp"
       security_groups  = []
-      self             = false
+      self             = false # should this security group route to itself
     }
   ]
 
