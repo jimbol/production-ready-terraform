@@ -40,6 +40,13 @@ module "vpc" {
   vpc_cidr = local.vpc_cidr
 }
 
+module "vpn" {
+  source = "../modules/vpn"
+  subnet_ids = [module.vpc.private_subnet_id, module.vpc.public_subnet_id]
+  vpc_id = module.vpc.vpc_id
+  vpc_cidr = local.vpc_cidr
+}
+
 resource "aws_security_group" "allow_ssh" {
   name = "allow_ssh"
   description = "Allows ssh connections and access to the internet"
