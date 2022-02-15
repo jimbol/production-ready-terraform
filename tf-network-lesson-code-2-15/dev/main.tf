@@ -34,9 +34,16 @@ module "backend" {
   env = local.env
 }
 
+module "vpc" {
+  source = "../modules/vpc"
+  env = local.env
+  vpc_cidr = local.vpc_cidr
+}
+
 resource "aws_security_group" "allow_ssh" {
   name = "allow_ssh"
   description = "Allows ssh connections and access to the internet"
+  vpc_id = module.vpc.vpc_id
 
   ingress = [{
     cidr_blocks = ["0.0.0.0/0"]
@@ -74,12 +81,26 @@ resource "aws_eip" "test_server_eip" {
 resource "aws_instance" "test_server" {
   ami = "ami-0f19d220602031aed"
   instance_type = "t2.nano"
-  # subnet_id =
+  subnet_id = module.vpc.public_subnet_id
   vpc_security_group_ids = [aws_security_group.allow_ssh.id]
 
   key_name = "terraformclass"
 
   tags = {
     name: "public test server"
+  }
+}
+
+resource "aws_instance" "private_test_server" {
+  ami = "ami-0f19d220602031aed"
+  instance_type = "t2.nano"
+  subnet_id = module.vpc.private_subnet_id
+
+  vpc_security_group_ids = [aws_security_group.allow_ssh.id]
+
+  key_name = "terraformclass"
+
+  tags = {
+    "name" = "private test server"
   }
 }
