@@ -8,8 +8,8 @@
   - Discuss folder stucture
 
 - Create provider
-  - Hard code region first
-  - Set up variable file and variable for the region
+
+
 
 - Add EC2 instance
   - Look at terraform.tfstate that is generated
@@ -64,13 +64,6 @@
     - The NAT Gateway needs to be in the public subnet so that it can reach the internet
   - Add Route table for Private subnet that points outgoing traffic to the nat gateway
 
-- Site to site VPN
-  - Guide - https://www.silect.is/blog/multi-cloud-vpn-terraform/
-  - What we're going to do
-    - Set up a quick Google Cloud network with an instance of whatever the heck they have, for testing
-    - Set up a aws_vpn_gateway
-    - Creat an aws_customer_gateway for our peer at google
-
 - Client VPN
   - What we're going to do:
     - Set up a VPN
@@ -86,3 +79,10 @@
   - Create Terraform resources
     - aws_acm_certificate
     - aws_ec2_client_vpn_endpoint
+
+- Site to site VPN
+  - Guide - https://www.silect.is/blog/multi-cloud-vpn-terraform/
+  - What we're going to do
+    - Set up a quick Google Cloud network with an instance of whatever the heck they have, for testing
+    - Set up a aws_vpn_gateway
+    - Creat an aws_customer_gateway for our peer at google

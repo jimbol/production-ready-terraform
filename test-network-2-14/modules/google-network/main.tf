@@ -1,4 +1,3 @@
-# based on https://github.com/GoogleCloudPlatform/autonetdeploy-multicloudvpn/blob/master/terraform/gcp_networking.tf
 
 locals {
   project_id    = "terraform-class-327014"
@@ -25,7 +24,7 @@ resource "google_compute_subnetwork" "google_subnet1" {
   region        = local.google_region
 }
 
-# Allow ping
+# allow ping
 resource "google_compute_firewall" "gcp-allow-icmp" {
   name    = "${google_compute_network.google_cloud_network.name}-gcp-allow-icmp"
   network = google_compute_network.google_cloud_network.name
@@ -39,21 +38,20 @@ resource "google_compute_firewall" "gcp-allow-icmp" {
   ]
 }
 
+# # Allow SSH for iperf testing.
+# resource "google_compute_firewall" "gcp-allow-ssh" {
+#   name    = "${google_compute_network.google_cloud_network.name}-gcp-allow-ssh"
+#   network = google_compute_network.google_cloud_network.name
 
-# Allow SSH for iperf testing.
-resource "google_compute_firewall" "gcp-allow-ssh" {
-  name    = "${google_compute_network.google_cloud_network.name}-gcp-allow-ssh"
-  network = google_compute_network.google_cloud_network.name
+#   allow {
+#     protocol = "tcp"
+#     ports    = ["22"]
+#   }
 
-  allow {
-    protocol = "tcp"
-    ports    = ["22"]
-  }
-
-  source_ranges = [
-    "0.0.0.0/0",
-  ]
-}
+#   source_ranges = [
+#     "0.0.0.0/0",
+#   ]
+# }
 
 # Allow traffic from the VPN subnets.
 resource "google_compute_firewall" "gcp-allow-vpn" {
@@ -73,22 +71,22 @@ resource "google_compute_firewall" "gcp-allow-vpn" {
   source_ranges = ["10.0.0.0/16"]
 }
 
-# Allow TCP traffic from the Internet.
-resource "google_compute_firewall" "gcp-allow-internet" {
-  name    = "${google_compute_network.google_cloud_network.name}-gcp-allow-internet"
-  network = google_compute_network.google_cloud_network.name
+# # Allow TCP traffic from the Internet.
+# resource "google_compute_firewall" "gcp-allow-internet" {
+#   name    = "${google_compute_network.google_cloud_network.name}-gcp-allow-internet"
+#   network = google_compute_network.google_cloud_network.name
 
-  allow {
-    protocol = "tcp"
-    ports    = ["80"]
-  }
+#   allow {
+#     protocol = "tcp"
+#     ports    = ["80"]
+#   }
 
-  source_ranges = [
-    "0.0.0.0/0",
-  ]
-}
+#   source_ranges = [
+#     "0.0.0.0/0",
+#   ]
+# }
 
-# # Compute instance
+# Compute instance
 resource "google_compute_address" "google_compute_ip" {
   name   = "google-compute-ip-${local.google_region}"
   region = local.google_region
@@ -116,8 +114,7 @@ resource "google_compute_instance" "test_gcp_instance" {
   }
 }
 
-# # VPN
-
+# VPN
 resource "google_compute_address" "gcp-vpn-ip" {
   name   = "gcp-vpn-ip"
   region = local.google_region
@@ -152,6 +149,7 @@ resource "google_compute_forwarding_rule" "fr_udp4500" {
   target      = google_compute_vpn_gateway.gcp-vpn-gateway.id
 }
 
+
 # /*
 #  * ----------VPN Tunnel1----------
 #  */
@@ -172,7 +170,6 @@ resource "google_compute_vpn_tunnel" "gcp-tunnel1" {
     google_compute_forwarding_rule.fr_udp4500,
   ]
 }
-
 
 resource "google_compute_router" "gcp-router1" {
   name    = "gcp-router1"
@@ -199,7 +196,6 @@ resource "google_compute_router_interface" "router_interface1" {
   ip_range   = "${var.aws_vpn_connection.tunnel1_cgw_inside_address}/30"
   vpn_tunnel = google_compute_vpn_tunnel.gcp-tunnel1.name
 }
-
 
 # /*
 #  * ----------VPN Tunnel2----------

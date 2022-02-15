@@ -29,7 +29,7 @@ When adding a user, generate a separate config for each user. This allows you to
 
 "jhall.oreilly.com" doesn't have to be a working domain. Its a name for the client.
 
-### If we weren't using terraform, you'd use this to import the certificate
+### Import the certificate
 ```
 aws acm import-certificate --certificate fileb://server.crt --private-key fileb://server.key --certificate-chain fileb://ca.crt
 ```

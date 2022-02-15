@@ -8,11 +8,11 @@ terraform {
 
   backend "s3" {
     encrypt = true
-    bucket = "terraform-class-dev-state"
+    bucket = "terraform-class-test-2-14-dev-state"
     key = "terraform-state/dev/terraform.tfstate"
     region = "us-east-2"
 
-    dynamodb_table = "terraform-class-dev-lock"
+    dynamodb_table = "terraform-class-test-2-14-dev-lock"
   }
 }
 
@@ -24,15 +24,16 @@ provider "aws" {
 locals {
   env = "dev"
   vpc_cidr = "10.0.0.0/16"
-  google_vpc_cidr = "11.0.0.0/24"
   public_subnet_cidr = "10.0.1.0/24"
   private_subnet_cidr = "10.0.2.0/24"
+  google_vpc_cidr = "11.0.0.0/24"
 }
 
 module "backend" {
   source = "../modules/backend"
   env = local.env
 }
+
 
 module "vpc" {
   source = "../modules/vpc"
@@ -106,13 +107,7 @@ resource "aws_security_group" "allow_ssh" {
   }]
 }
 
-resource "aws_eip" "test_server_eip" {
-  vpc = true
-
-  instance = aws_instance.test_server.id
-  associate_with_private_ip = aws_instance.test_server.private_ip
-}
-
+# public ec2
 resource "aws_instance" "test_server" {
   ami = "ami-0f19d220602031aed"
   instance_type = "t2.nano"
@@ -125,6 +120,14 @@ resource "aws_instance" "test_server" {
   }
 }
 
+resource "aws_eip" "test_server_eip" {
+  vpc = true
+
+  instance = aws_instance.test_server.id
+  associate_with_private_ip = aws_instance.test_server.private_ip
+}
+
+# private ec2
 resource "aws_instance" "private_test_server" {
   ami = "ami-0f19d220602031aed"
   instance_type = "t2.nano"
