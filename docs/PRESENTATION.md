@@ -71,7 +71,7 @@
       - You can use Active directory or single sign-on instead
   - Create a CA (certificate authority)
     - Guides
-      - [docs/create-certificate-authority.md](docs/create-certificate-authority.md)
+      - [docs/create-certificate-authority.md](create-certificate-authority.md)
       - [AWS Docs](https://docs.aws.amazon.com/vpn/latest/clientvpn-admin/client-authentication.html)
     - Create a server certificate and key
     - Create client cert and key
