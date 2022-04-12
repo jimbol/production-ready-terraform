@@ -6,9 +6,11 @@ resource "aws_acm_certificate" "vpn_certificate" {
 
 resource "aws_ec2_client_vpn_endpoint" "vpn" {
   description = "Vpn endpoint that we will use to connect to our network"
+  vpc_id = var.vpc_id
 
   client_cidr_block = "10.1.0.0/22"
   server_certificate_arn = aws_acm_certificate.vpn_certificate.arn
+  security_group_ids = [aws_security_group.vpn_access.id]
   split_tunnel = true
 
   authentication_options {
@@ -50,10 +52,9 @@ resource "aws_security_group" "vpn_access" {
   }]
 }
 
-resource "aws_ec2_client_vpn_network_association" "vpn_subnet_association" {
+resource "aws_ec2_client_vpn_network_association" "vpn_network_association" {
   count = length(var.subnet_ids)
   subnet_id = var.subnet_ids[count.index]
-  security_groups = [aws_security_group.vpn_access.id]
   client_vpn_endpoint_id = aws_ec2_client_vpn_endpoint.vpn.id
 }
 

@@ -9,8 +9,6 @@
 
 - Create provider
 
-
-
 - Add EC2 instance
   - Look at terraform.tfstate that is generated
   - Terraform generates a static configuration called the terraform state

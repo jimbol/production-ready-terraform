@@ -2,17 +2,21 @@ terraform {
   required_providers {
     aws = {
       source = "hashicorp/aws"
-      version = "~>3.0"
+      version = "~>4.0"
+    }
+    google = {
+      source = "hashicorp/google"
+      version = "~>4.0"
     }
   }
 
   backend "s3" {
     encrypt = true
-    bucket = "terraform-class-dev-state"
+    bucket = "terraform-class-test-4-12-dev-state"
     key = "terraform-state/dev/terraform.tfstate"
     region = "us-east-2"
 
-    dynamodb_table = "terraform-class-dev-lock"
+    dynamodb_table = "terraform-class-test-4-12-dev-lock"
   }
 }
 
@@ -22,11 +26,11 @@ provider "aws" {
 }
 
 locals {
-  env = "prod"
-  vpc_cidr = "100.0.0.0/16"
-  google_vpc_cidr = "110.0.0.0/24"
-  public_subnet_cidr = "100.0.1.0/24"
-  private_subnet_cidr = "100.0.2.0/24"
+  env = "dev"
+  vpc_cidr = "10.0.0.0/16"
+  public_subnet_cidr = "10.0.1.0/24"
+  private_subnet_cidr = "10.0.2.0/24"
+  google_vpc_cidr = "11.0.0.0/24"
 }
 
 module "backend" {
@@ -36,8 +40,8 @@ module "backend" {
 
 module "vpc" {
   source = "../modules/vpc"
-  vpc_cidr = local.vpc_cidr
   env = local.env
+  vpc_cidr = local.vpc_cidr
 }
 
 module "vpn" {
@@ -47,31 +51,32 @@ module "vpn" {
   vpc_cidr = local.vpc_cidr
 }
 
+module "site_to_site_vpn" {
+  source = "../modules/site-to-site-vpn"
+  vpc_id = module.vpc.vpc_id
+  vpc_cidr = local.vpc_cidr
+  google_vpn_interfaces = module.google_network.google_vpn_interfaces
+  google_vpc_cidr = local.google_vpc_cidr
+  google_vpn_address = module.google_network.google_vpn_address
+  aws_private_route_table_id = module.vpc.private_route_table_id
+  aws_public_route_table_id = module.vpc.public_route_table_id
+}
+
 module "google_network" {
   source = "../modules/google-network"
   cidr_block = local.google_vpc_cidr
   aws_subnets = [local.private_subnet_cidr, local.public_subnet_cidr]
   aws_vpn_connection = {
-    tunnel1_address = module.site_to_site_vpn.aws_vpn_connection.tunnel1_address,
-    tunnel1_preshared_key = module.site_to_site_vpn.aws_vpn_connection.tunnel1_preshared_key,
-    tunnel1_vgw_inside_address = module.site_to_site_vpn.aws_vpn_connection.tunnel1_vgw_inside_address,
-    tunnel1_cgw_inside_address = module.site_to_site_vpn.aws_vpn_connection.tunnel1_cgw_inside_address,
+    tunnel1_address = module.site_to_site_vpn.aws_vpn_connection1.tunnel1_address,
+    tunnel1_preshared_key = module.site_to_site_vpn.aws_vpn_connection1.tunnel1_preshared_key,
+    tunnel1_vgw_inside_address = module.site_to_site_vpn.aws_vpn_connection1.tunnel1_vgw_inside_address,
+    tunnel1_cgw_inside_address = module.site_to_site_vpn.aws_vpn_connection1.tunnel1_cgw_inside_address,
 
-    tunnel2_address = module.site_to_site_vpn.aws_vpn_connection.tunnel2_address,
-    tunnel2_preshared_key = module.site_to_site_vpn.aws_vpn_connection.tunnel2_preshared_key,
-    tunnel2_vgw_inside_address = module.site_to_site_vpn.aws_vpn_connection.tunnel2_vgw_inside_address,
-    tunnel2_cgw_inside_address = module.site_to_site_vpn.aws_vpn_connection.tunnel2_cgw_inside_address,
+    tunnel2_address = module.site_to_site_vpn.aws_vpn_connection2.tunnel2_address,
+    tunnel2_preshared_key = module.site_to_site_vpn.aws_vpn_connection2.tunnel2_preshared_key,
+    tunnel2_vgw_inside_address = module.site_to_site_vpn.aws_vpn_connection2.tunnel2_vgw_inside_address,
+    tunnel2_cgw_inside_address = module.site_to_site_vpn.aws_vpn_connection2.tunnel2_cgw_inside_address,
   }
-}
-
-module "site_to_site_vpn" {
-  source = "../modules/site-to-site-vpn"
-  vpc_id = module.vpc.vpc_id
-  vpc_cidr = local.vpc_cidr
-  google_vpc_cidr = local.google_vpc_cidr
-  google_vpn_address = module.google_network.google_vpn_address
-  aws_private_route_table_id = module.vpc.private_route_table_id
-  aws_public_route_table_id = module.vpc.public_route_table_id
 }
 
 resource "aws_security_group" "allow_ssh" {
@@ -94,21 +99,20 @@ resource "aws_security_group" "allow_ssh" {
 
   egress = [{
     cidr_blocks = ["0.0.0.0/0"]
-    protocol = "-1"
-    to_port = 0
-    from_port = 0
     description = "internet egress"
+    protocol = "-1"
+    from_port = 0
+    to_port = 0
 
-    self             = false
+    self = false
     ipv6_cidr_blocks = []
-    prefix_list_ids  = []
     security_groups  = []
+    prefix_list_ids = []
   }]
 }
 
 resource "aws_eip" "test_server_eip" {
   vpc = true
-
   instance = aws_instance.test_server.id
   associate_with_private_ip = aws_instance.test_server.private_ip
 }
@@ -120,8 +124,9 @@ resource "aws_instance" "test_server" {
   vpc_security_group_ids = [aws_security_group.allow_ssh.id]
 
   key_name = "terraformclass"
+
   tags = {
-    "name" = "public test server"
+    name: "public test server"
   }
 }
 
@@ -129,10 +134,12 @@ resource "aws_instance" "private_test_server" {
   ami = "ami-0f19d220602031aed"
   instance_type = "t2.nano"
   subnet_id = module.vpc.private_subnet_id
+
   vpc_security_group_ids = [aws_security_group.allow_ssh.id]
 
   key_name = "terraformclass"
+
   tags = {
-    "name" = "public test server"
+    "name" = "private test server"
   }
 }

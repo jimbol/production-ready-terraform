@@ -1,5 +1,5 @@
 resource "aws_s3_bucket" "terraform_backend" {
-  bucket = "terraform-class-2-15-${var.env}-state"
+  bucket = "terraform-class-2-16-${var.env}-state"
 
   versioning {
     enabled = true
@@ -20,7 +20,7 @@ resource "aws_s3_bucket" "terraform_backend" {
 }
 
 resource "aws_dynamodb_table" "terraform_state_lock" {
-  name = "terraform-class-2-15-${var.env}-state"
+  name = "terraform-class-2-16-${var.env}-state"
 
   hash_key = "LockID"
   read_capacity = 20

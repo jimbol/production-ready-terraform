@@ -1,17 +1,14 @@
-# based on https://github.com/GoogleCloudPlatform/autonetdeploy-multicloudvpn/blob/master/terraform/gcp_networking.tf
-
 locals {
-  project_id    = "terraform-class-327014"
+  project_id = "terraform-class-327014"
   google_region = "us-east1"
-  network_name  = "terraform-class-network"
-  cidr_block    = "11.0.0.0/24"
+  network_name = "terraform-class-network"
   compute_address = "11.0.0.100"
 }
 
 provider "google" {
   credentials = file(pathexpand("~/.config/gcloud/${local.project_id}.json"))
-  region      = local.google_region
-  project     = local.project_id
+  region = local.google_region
+  project = local.project_id
 }
 
 resource "google_compute_network" "google_cloud_network" {
@@ -21,11 +18,12 @@ resource "google_compute_network" "google_cloud_network" {
 
 resource "google_compute_subnetwork" "google_subnet1" {
   name          = "google-subnet1"
-  ip_cidr_range = local.cidr_block
+  ip_cidr_range = var.cidr_block
   network       = google_compute_network.google_cloud_network.name
   region        = local.google_region
 }
 
+# Allow ping
 resource "google_compute_firewall" "gcp-allow-icmp" {
   name    = "${google_compute_network.google_cloud_network.name}-gcp-allow-icmp"
   network = google_compute_network.google_cloud_network.name
@@ -38,7 +36,6 @@ resource "google_compute_firewall" "gcp-allow-icmp" {
     "0.0.0.0/0",
   ]
 }
-
 
 # Allow SSH for iperf testing.
 resource "google_compute_firewall" "gcp-allow-ssh" {
@@ -88,7 +85,7 @@ resource "google_compute_firewall" "gcp-allow-internet" {
   ]
 }
 
-# # Compute instance
+# Compute instance
 resource "google_compute_address" "google_compute_ip" {
   name   = "google-compute-ip-${local.google_region}"
   region = local.google_region
@@ -116,7 +113,11 @@ resource "google_compute_instance" "test_gcp_instance" {
   }
 }
 
-# # VPN
+# VPN
+resource "google_compute_ha_vpn_gateway" "target_gateway" {
+  name     = "vpn-aws"
+  network  = google_compute_network.google_cloud_network.self_link
+}
 
 resource "google_compute_address" "gcp-vpn-ip" {
   name   = "gcp-vpn-ip"
@@ -155,25 +156,6 @@ resource "google_compute_forwarding_rule" "fr_udp4500" {
 # /*
 #  * ----------VPN Tunnel1----------
 #  */
-
-resource "google_compute_vpn_tunnel" "gcp-tunnel1" {
-  name          = "gcp-tunnel1"
-  peer_ip       = var.aws_vpn_connection.tunnel1_address
-  shared_secret = var.aws_vpn_connection.tunnel1_preshared_key
-  ike_version   = 1
-
-  target_vpn_gateway = google_compute_vpn_gateway.gcp-vpn-gateway.self_link
-
-  router = google_compute_router.gcp-router1.name
-
-  depends_on = [
-    google_compute_forwarding_rule.fr_esp,
-    google_compute_forwarding_rule.fr_udp500,
-    google_compute_forwarding_rule.fr_udp4500,
-  ]
-}
-
-
 resource "google_compute_router" "gcp-router1" {
   name    = "gcp-router1"
   region  = local.google_region
@@ -200,27 +182,73 @@ resource "google_compute_router_interface" "router_interface1" {
   vpn_tunnel = google_compute_vpn_tunnel.gcp-tunnel1.name
 }
 
-
 # /*
 #  * ----------VPN Tunnel2----------
 #  */
 
-resource "google_compute_vpn_tunnel" "gcp-tunnel2" {
-  name          = "gcp-tunnel2"
-  peer_ip       = var.aws_vpn_connection.tunnel2_address
-  shared_secret = var.aws_vpn_connection.tunnel2_preshared_key
-  ike_version   = 1
+# NEW
+resource "google_compute_external_vpn_gateway" "aws_gateway" {
+  name            = "aws-gateway"
+  redundancy_type = "TWO_IPS_REDUNDANCY"
+  description     = "VPN gateway on AWS side"
+  interface {
+      id         = 0
+      ip_address = var.aws_vpn_connection.tunnel1_address
+    }
+  interface {
+      id         = 1
+      ip_address = var.aws_vpn_connection.tunnel2_address
+    }
+}
 
-  target_vpn_gateway = google_compute_vpn_gateway.gcp-vpn-gateway.self_link
-
-  router = google_compute_router.gcp-router2.name
-
+resource "google_compute_vpn_tunnel" "gcp-tunnel1" {
+  name                            = "vpn-tunnel-1"
+  vpn_gateway                     = google_compute_ha_vpn_gateway.target_gateway.self_link
+  shared_secret                   = var.aws_vpn_connection.tunnel1_preshared_key
+  peer_external_gateway           = google_compute_external_vpn_gateway.aws_gateway.self_link
+  peer_external_gateway_interface = 0
+  router                          = google_compute_router.gcp-router1.name
+  ike_version                     = 2
+  vpn_gateway_interface           = 0
   depends_on = [
     google_compute_forwarding_rule.fr_esp,
     google_compute_forwarding_rule.fr_udp500,
     google_compute_forwarding_rule.fr_udp4500,
   ]
 }
+
+resource "google_compute_vpn_tunnel" "gcp-tunnel2" {
+  name                            = "vpn-tunnel-2"
+  vpn_gateway                     = google_compute_ha_vpn_gateway.target_gateway.self_link
+  shared_secret                   = var.aws_vpn_connection.tunnel2_preshared_key
+  peer_external_gateway           = google_compute_external_vpn_gateway.aws_gateway.self_link
+  peer_external_gateway_interface = 1
+  router                          = google_compute_router.gcp-router2.name
+  ike_version                     = 2
+  vpn_gateway_interface           = 0
+  depends_on = [
+    google_compute_forwarding_rule.fr_esp,
+    google_compute_forwarding_rule.fr_udp500,
+    google_compute_forwarding_rule.fr_udp4500,
+  ]
+}
+
+# resource "google_compute_vpn_tunnel" "gcp-tunnel2" {
+#   name          = "gcp-tunnel2"
+#   peer_ip       = var.aws_vpn_connection.tunnel2_address
+#   shared_secret = var.aws_vpn_connection.tunnel2_preshared_key
+#   ike_version   = 2
+
+#   target_vpn_gateway = google_compute_vpn_gateway.gcp-vpn-gateway.self_link
+
+#   router = google_compute_router.gcp-router2.name
+
+#   depends_on = [
+#     google_compute_forwarding_rule.fr_esp,
+#     google_compute_forwarding_rule.fr_udp500,
+#     google_compute_forwarding_rule.fr_udp4500,
+#   ]
+# }
 
 resource "google_compute_router" "gcp-router2" {
   name    = "gcp-router2"

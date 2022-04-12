@@ -2,18 +2,18 @@ terraform {
   required_providers {
     aws = {
       source = "hashicorp/aws"
-      version = "~>3.0"
+      version = "~>4.0"
     }
   }
 
-  backend "s3" {
-    encrypt = true
-    bucket = "terraform-class-2-15-dev-state"
-    key = "terraform-state/dev/terraform.tfstate"
-    region = "us-east-2"
+  # backend "s3" {
+  #   encrypt = true
+  #   bucket = "terraform-class-2-16-dev-state"
+  #   key = "terraform-state/dev/terraform.tfstate"
+  #   region = "us-east-2"
 
-    dynamodb_table = "terraform-class-2-15-dev-state"
-  }
+  #   dynamodb_table = "terraform-class-2-16-dev-state"
+  # }
 }
 
 provider "aws" {
