@@ -23,6 +23,9 @@ provider "aws" {
 
 locals {
   env = "dev"
+  vpc_cidr = "10.0.0.0/16"
+  public_subnet_cidr = "10.0.1.0/24"
+  private_subnet_cidr = "10.0.2.0/24"
 }
 
 module "backend" {
@@ -30,9 +33,24 @@ module "backend" {
   env = local.env
 }
 
+module "vpc" {
+  source = "../modules/vpc"
+  env = local.env
+  vpc_cidr = local.vpc_cidr
+  public_subnet_cidr = local.public_subnet_cidr
+  private_subnet_cidr = local.private_subnet_cidr
+}
+
+resource "aws_eip" "test_server_eip" {
+  vpc = true
+  instance = aws_instance.test_server.id
+  associate_with_private_ip = aws_instance.test_server.private_ip
+}
+
 resource "aws_instance" "test_server" {
   ami = "ami-0f19d220602031aed"
   instance_type = "t2.nano"
+  subnet_id = module.vpc.public_subnet_id
   vpc_security_group_ids = [aws_security_group.allow_ssh.id]
   key_name = "terraformclass"
 
@@ -40,10 +58,22 @@ resource "aws_instance" "test_server" {
     Name = "test server"
   }
 }
+resource "aws_instance" "private_test_server" {
+  ami = "ami-0f19d220602031aed"
+  instance_type = "t2.nano"
+  subnet_id = module.vpc.private_subnet_id
+  vpc_security_group_ids = [aws_security_group.allow_ssh.id]
+  key_name = "terraformclass"
+
+  tags = {
+    Name = "private test server"
+  }
+}
 
 resource "aws_security_group" "allow_ssh" {
   name = "allow_ssh"
   description = "Allows ssh connections and access to the internet"
+  vpc_id = module.vpc.vpc_id
 
   ingress = [{
     cidr_blocks = ["0.0.0.0/0"]
