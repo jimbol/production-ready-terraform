@@ -41,6 +41,13 @@ module "vpc" {
   private_subnet_cidr = local.private_subnet_cidr
 }
 
+module "vpn" {
+  source = "../modules/vpn"
+  vpc_id = module.vpc.vpc_id
+  subnet_ids = [module.vpc.public_subnet_id, module.vpc.private_subnet_id]
+  vpc_cidr = local.vpc_cidr
+}
+
 resource "aws_eip" "test_server_eip" {
   vpc = true
   instance = aws_instance.test_server.id
