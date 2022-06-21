@@ -1,6 +1,13 @@
 resource "aws_s3_bucket" "terraform_backend" {
   bucket = "terraform-class-4-12-${var.env}-tfstate"
 
+  lifecycle {
+    prevent_destroy = false
+  }
+
+  # Terraform wont delete an S3 bucket with contents unless you force_destroy
+  force_destroy = true
+
   tags = {
     Name = "Remote terraform backend"
     env = var.env

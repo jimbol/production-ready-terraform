@@ -51,33 +51,6 @@ module "vpn" {
   vpc_cidr = local.vpc_cidr
 }
 
-module "site_to_site_vpn" {
-  source = "../modules/site-to-site-vpn"
-  vpc_id = module.vpc.vpc_id
-  vpc_cidr = local.vpc_cidr
-  google_vpn_interfaces = module.google_network.google_vpn_interfaces
-  google_vpc_cidr = local.google_vpc_cidr
-  google_vpn_address = module.google_network.google_vpn_address
-  aws_private_route_table_id = module.vpc.private_route_table_id
-  aws_public_route_table_id = module.vpc.public_route_table_id
-}
-
-module "google_network" {
-  source = "../modules/google-network"
-  cidr_block = local.google_vpc_cidr
-  aws_subnets = [local.private_subnet_cidr, local.public_subnet_cidr]
-  aws_vpn_connection = {
-    tunnel1_address = module.site_to_site_vpn.aws_vpn_connection1.tunnel1_address,
-    tunnel1_preshared_key = module.site_to_site_vpn.aws_vpn_connection1.tunnel1_preshared_key,
-    tunnel1_vgw_inside_address = module.site_to_site_vpn.aws_vpn_connection1.tunnel1_vgw_inside_address,
-    tunnel1_cgw_inside_address = module.site_to_site_vpn.aws_vpn_connection1.tunnel1_cgw_inside_address,
-
-    tunnel2_address = module.site_to_site_vpn.aws_vpn_connection2.tunnel2_address,
-    tunnel2_preshared_key = module.site_to_site_vpn.aws_vpn_connection2.tunnel2_preshared_key,
-    tunnel2_vgw_inside_address = module.site_to_site_vpn.aws_vpn_connection2.tunnel2_vgw_inside_address,
-    tunnel2_cgw_inside_address = module.site_to_site_vpn.aws_vpn_connection2.tunnel2_cgw_inside_address,
-  }
-}
 
 resource "aws_security_group" "allow_ssh" {
   name = "allow_ssh"
@@ -143,3 +116,5 @@ resource "aws_instance" "private_test_server" {
     "name" = "private test server"
   }
 }
+
+
