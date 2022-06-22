@@ -48,63 +48,63 @@ module "vpn" {
   vpc_cidr = local.vpc_cidr
 }
 
-# resource "aws_eip" "test_server_eip" {
-#   vpc = true
-#   instance = aws_instance.test_server.id
-#   associate_with_private_ip = aws_instance.test_server.private_ip
-# }
+resource "aws_eip" "test_server_eip" {
+  vpc = true
+  instance = aws_instance.test_server.id
+  associate_with_private_ip = aws_instance.test_server.private_ip
+}
 
-# resource "aws_instance" "test_server" {
-#   ami = "ami-0f19d220602031aed"
-#   instance_type = "t2.nano"
-#   subnet_id = module.vpc.public_subnet_id
-#   vpc_security_group_ids = [aws_security_group.allow_ssh.id]
-#   key_name = "terraformclass"
+resource "aws_instance" "test_server" {
+  ami = "ami-0f19d220602031aed"
+  instance_type = "t2.nano"
+  subnet_id = module.vpc.public_subnet_id
+  vpc_security_group_ids = [aws_security_group.allow_ssh.id]
+  key_name = "terraformclass"
 
-#   tags = {
-#     Name = "test server"
-#   }
-# }
-# resource "aws_instance" "private_test_server" {
-#   ami = "ami-0f19d220602031aed"
-#   instance_type = "t2.nano"
-#   subnet_id = module.vpc.private_subnet_id
-#   vpc_security_group_ids = [aws_security_group.allow_ssh.id]
-#   key_name = "terraformclass"
+  tags = {
+    Name = "test server"
+  }
+}
+resource "aws_instance" "private_test_server" {
+  ami = "ami-0f19d220602031aed"
+  instance_type = "t2.nano"
+  subnet_id = module.vpc.private_subnet_id
+  vpc_security_group_ids = [aws_security_group.allow_ssh.id]
+  key_name = "terraformclass"
 
-#   tags = {
-#     Name = "private test server"
-#   }
-# }
+  tags = {
+    Name = "private test server"
+  }
+}
 
-# resource "aws_security_group" "allow_ssh" {
-#   name = "allow_ssh"
-#   description = "Allows ssh connections and access to the internet"
-#   vpc_id = module.vpc.vpc_id
+resource "aws_security_group" "allow_ssh" {
+  name = "allow_ssh"
+  description = "Allows ssh connections and access to the internet"
+  vpc_id = module.vpc.vpc_id
 
-#   ingress = [{
-#     cidr_blocks = ["0.0.0.0/0"]
-#     description = "ssh ingress"
-#     protocol = "tcp"
-#     from_port = 22
-#     to_port = 22
+  ingress = [{
+    cidr_blocks = ["0.0.0.0/0"]
+    description = "ssh ingress"
+    protocol = "tcp"
+    from_port = 22
+    to_port = 22
 
-#     self = false
-#     ipv6_cidr_blocks = []
-#     security_groups  = []
-#     prefix_list_ids = []
-#   }]
+    self = false
+    ipv6_cidr_blocks = []
+    security_groups  = []
+    prefix_list_ids = []
+  }]
 
-#   egress = [{
-#     cidr_blocks = ["0.0.0.0/0"]
-#     description = "internet access"
-#     protocol = "-1"
-#     from_port = 0
-#     to_port = 0
+  egress = [{
+    cidr_blocks = ["0.0.0.0/0"]
+    description = "internet access"
+    protocol = "-1"
+    from_port = 0
+    to_port = 0
 
-#     self = false
-#     ipv6_cidr_blocks = []
-#     security_groups  = []
-#     prefix_list_ids = []
-#   }]
-# }
+    self = false
+    ipv6_cidr_blocks = []
+    security_groups  = []
+    prefix_list_ids = []
+  }]
+}
